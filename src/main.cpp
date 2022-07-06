@@ -7,7 +7,6 @@ const char* password = "12345678";     // Contraseña
 boolean led = false;
 WiFiServer server(80);
 String header;
-
 String btn1 = "off";
 String btn2 = "off";
 boolean titilar = false;
@@ -38,7 +37,6 @@ void setup() {
   IPAddress IP = WiFi.softAPIP();
   Serial.print("AP IP address: ");
   Serial.println(IP);
-  
   server.begin(); // Inicia el servidor
 }
 
@@ -51,16 +49,9 @@ void loop(){
     Serial.println("Nuevo Cliente.");       //Imprime mensaje
     String currentLine = "";                // Cadena para contener los datos del cliente entrantes
     while (client.connected() && currentTime - previousTime <= timeoutTime) {            // Bucle cuando el cliente esta conectado
-      // if(titilar == true ){
-      //   digitalWrite(2, !led);
-      //   currentTime = millis();
-      // }
+    
       if (client.available()) {             // bytes para leer del cliente
-        // digitalWrite(2, led);
-        // if(titilar == true ){
-        //   digitalWrite(2, !led);
-        //   currentTime = millis();
-        // }
+       
         char c = client.read();             // lee byte
         Serial.write(c);                    // lo imprime 
         header += c;
@@ -78,26 +69,18 @@ void loop(){
               btn1 = "on";
               titilar = false;
               led = HIGH;
-              // digitalWrite(2, led);
             } else if (header.indexOf("GET /b1/off") >= 0) {
               btn1 = "off";
               titilar = false;
               led = LOW;
-              // digitalWrite(2, led);
             }else if (header.indexOf("GET /b2/on") >= 0) {
               titilar = true;
-              // led = HIGH;
               btn2 = "on";
             } else if (header.indexOf("GET /b2/off") >= 0) {
               titilar = false;
-              led = !led;
               led = LOW;
               btn2 = "off";
             }
-            // if(titilar == true ){
-            //   digitalWrite(2, !led);
-            //   currentTime = millis();
-            // }
             digitalWrite(2, led);
             // pagina HTML
             client.println("<!DOCTYPE html><html>");
@@ -128,6 +111,7 @@ void loop(){
             
             // Respuesta HTTP termina con linea en blanco
             client.println();
+            
             // Salir del while
             break;
           } else { // Si tiene nueva linea que borre
@@ -138,22 +122,13 @@ void loop(){
           currentLine += c;      // agregarlo al currenLine
         }
       }
-      if(titilar == true ){
-        digitalWrite(2, LOW);
-        digitalWrite(2, HIGH);
-        digitalWrite(2, LOW);
-        digitalWrite(2, HIGH);
-      }
     }
     // limpiar
     header = "";
-    // Cierra la conexion
     client.stop();
     if(titilar == true ){
-      digitalWrite(2, !led);
+        led = !led;
+        digitalWrite(2, !led);
     }
-   
-    Serial.println("Cliente desconectado.");
-    Serial.println("");
   }
 }
