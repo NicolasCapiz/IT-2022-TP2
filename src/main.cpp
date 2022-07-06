@@ -4,24 +4,30 @@
 
 const char* ssid     = "wifiNico"; // Nombre de la red 
 const char* password = "12345678";     // Contraseña
-
+boolean led = false;
 WiFiServer server(80);
 String header;
 
 String btn1 = "off";
 String btn2 = "off";
+boolean titilar = false;
 
- 
+ // Current time
+unsigned long currentTime = millis();
+// Previous time
+unsigned long previousTime = 0; 
+// Define timeout time in milliseconds (example: 2000ms = 2s)
+const long timeoutTime = 2000;
  
 
 void setup() {
   Serial.begin(9600);
-  pinMode(LED_BUILTIN, OUTPUT);
-  pinMode(LED_BUILTIN,OUTPUT);
+  pinMode(2, OUTPUT);
+  pinMode(2,OUTPUT);
   
   // Salidas en LOW
-  digitalWrite(LED_BUILTIN, LOW);
-  digitalWrite(LED_BUILTIN,LOW);
+  digitalWrite(2, LOW);
+  digitalWrite(2,LOW);
   
 
   // Conectarse a la red wifi con ssid y pass
@@ -39,11 +45,22 @@ void setup() {
 void loop(){
   WiFiClient client = server.available();   // Escucha los clientes entrantes
 
-  if (client) {                             // Nuevo cliente se conecta,
+  if (client) {    
+    currentTime = millis();
+    previousTime = currentTime;                         // Nuevo cliente se conecta,
     Serial.println("Nuevo Cliente.");       //Imprime mensaje
     String currentLine = "";                // Cadena para contener los datos del cliente entrantes
-    while (client.connected()) {            // Bucle cuando el cliente esta conectado
+    while (client.connected() && currentTime - previousTime <= timeoutTime) {            // Bucle cuando el cliente esta conectado
+      // if(titilar == true ){
+      //   digitalWrite(2, !led);
+      //   currentTime = millis();
+      // }
       if (client.available()) {             // bytes para leer del cliente
+        // digitalWrite(2, led);
+        // if(titilar == true ){
+        //   digitalWrite(2, !led);
+        //   currentTime = millis();
+        // }
         char c = client.read();             // lee byte
         Serial.write(c);                    // lo imprime 
         header += c;
@@ -59,24 +76,29 @@ void loop(){
             // enciende y apaga los botones
             if (header.indexOf("GET /b1/on") >= 0) {
               btn1 = "on";
-              digitalWrite(LED_BUILTIN, HIGH);
+              titilar = false;
+              led = HIGH;
+              // digitalWrite(2, led);
             } else if (header.indexOf("GET /b1/off") >= 0) {
               btn1 = "off";
-              digitalWrite(LED_BUILTIN, LOW);
+              titilar = false;
+              led = LOW;
+              // digitalWrite(2, led);
             }else if (header.indexOf("GET /b2/on") >= 0) {
+              titilar = true;
+              // led = HIGH;
               btn2 = "on";
-              for(int i = 0;i!= 10; i++){
-                digitalWrite(LED_BUILTIN, HIGH);
-                delay(700);
-                digitalWrite(LED_BUILTIN, LOW);
-                delay(700);
-              }
-              digitalWrite(LED_BUILTIN, HIGH);
             } else if (header.indexOf("GET /b2/off") >= 0) {
-              btn2 = "off"; 
-              digitalWrite(LED_BUILTIN, LOW);
+              titilar = false;
+              led = !led;
+              led = LOW;
+              btn2 = "off";
             }
-            
+            // if(titilar == true ){
+            //   digitalWrite(2, !led);
+            //   currentTime = millis();
+            // }
+            digitalWrite(2, led);
             // pagina HTML
             client.println("<!DOCTYPE html><html>");
             client.println("<head><meta name=\"viewport\" content=\"width=device-width, initial-scale=1\">");
@@ -111,15 +133,26 @@ void loop(){
           } else { // Si tiene nueva linea que borre
             currentLine = "";
           }
+         
         } else if (c != '\r') {  // si obtuvo algo mas,
           currentLine += c;      // agregarlo al currenLine
         }
+      }
+      if(titilar == true ){
+        digitalWrite(2, LOW);
+        digitalWrite(2, HIGH);
+        digitalWrite(2, LOW);
+        digitalWrite(2, HIGH);
       }
     }
     // limpiar
     header = "";
     // Cierra la conexion
     client.stop();
+    if(titilar == true ){
+      digitalWrite(2, !led);
+    }
+   
     Serial.println("Cliente desconectado.");
     Serial.println("");
   }
